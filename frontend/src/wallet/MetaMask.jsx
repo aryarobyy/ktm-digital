@@ -1,21 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MetaMaskSDK from "@metamask/sdk";
 
 const MetaMask = () => {
   const [account, setAccount] = useState(null);
+  const [ethereum, setEthereum] = useState(null);
+
+  useEffect(() => {
+    const sdk = new MetaMaskSDK({
+      dappMetadata: {
+        name: "Coba deh",
+        url: window.location.href,
+      },
+      infuraAPIKey: import.meta.env.VITE_INFURA_API_KEY,
+    });
+
+    let eth = sdk.getProvider();
+
+    if (!eth && window.ethereum) {
+      console.warn('MetaMaskSDK: Falling back to window.ethereum');
+      eth = window.ethereum;
+    }
+
+    if (!eth) {
+      alert('MetaMask is not available. Please install MetaMask.');
+      return;
+    }
+
+    setEthereum(eth);
+    console.log('MMSDK initialized:', sdk);
+    console.log('Ethereum provider:', eth);
+  }, []);
 
   const connectMetaMask = async () => {
     try {
-      const MMSDK = new MetaMaskSDK({
-        dappMetadata: {
-          name: "Coba deh",
-          url: window.location.href,
-        },
-        infuraAPIKey: import.meta.env.VITE_INFURA_API_KEY,
-      });
-
-      let ethereum = MMSDK.getProvider();
-
       if (!ethereum) {
         alert('MetaMask is not available. Please install MetaMask.');
         return;
@@ -24,12 +41,9 @@ const MetaMask = () => {
       const accounts = await ethereum.request({ method: "eth_requestAccounts", params: [] });
       setAccount(accounts[0]);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to connect to MetaMask:', error);
       alert('Failed to connect to MetaMask');
     }
-    console.log('MMSDK initialized:', MMSDK);
-console.log('Ethereum provider:', ethereum);
-
   };
 
   return (
